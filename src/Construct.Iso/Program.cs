@@ -1,5 +1,6 @@
 using Construct.Iso;
 using System.Text.Json;
+using System.Text;
 
 var stdinRequest = args.Length == 1 && args[0] == "--request-stdin";
 if (!stdinRequest && (args.Length != 2 || args.Contains("--help")))
@@ -18,7 +19,8 @@ try
 {
     if (stdinRequest)
     {
-        var request = JsonSerializer.Deserialize<IsoBuildRequest>(await Console.In.ReadToEndAsync(cancellation.Token),
+        using var reader = new StreamReader(Console.OpenStandardInput(), new UTF8Encoding(false, true));
+        var request = JsonSerializer.Deserialize<IsoBuildRequest>(await reader.ReadToEndAsync(cancellation.Token),
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? throw new ArgumentException("Missing build request.");
         await request.BuildAsync(Console.WriteLine, cancellation.Token);
     }
