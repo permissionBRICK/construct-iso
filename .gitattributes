@@ -1,0 +1,4 @@
+* text=auto
+*.sh text eol=lf
+# The console banner intentionally ends with a blank line; parity with the guest payload matters.
+/src/Construct.Iso/Templates/banner.txt whitespace=-blank-at-eof

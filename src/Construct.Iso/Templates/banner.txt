@@ -1,0 +1,20 @@
+
+============================================================
+  The Construct VM  -  base image installed
+  SETUP IS NOT COMPLETE YET
+============================================================
+
+  This is a blank Ubuntu base. Finish provisioning from your
+  Windows host (outside Hyper-V) so the agent tools here AND
+  your host's SSH key + VS Code are all configured:
+
+    1. Open PowerShell in your local checkout of the
+       construct repo.
+    2. Run:   .\Provision-AgentVM.ps1
+
+  Target : ${BANNER_TARGET}   (seed user: ${VM_USER})
+
+  The script uploads the repo, provisions this VM, retrieves
+  the root SSH key, and wires up your host for SSH + VS Code.
+============================================================
+

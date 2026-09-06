@@ -1,0 +1,26 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  source:
+    id: ${SOURCE_ID}
+    search_drivers: false
+  storage:
+    layout:
+      name: direct
+  identity:
+    realname: "${VM_REALNAME}"
+    hostname: ${IDENTITY_HOSTNAME}
+    username: ${VM_USER}
+    password: "${PASS_HASH}"
+  ssh:
+    install-server: true
+    allow-pw: true
+    authorized-keys:
+      - ${BOOTSTRAP_PUBKEY}
+  late-commands:
+    - mkdir -p /target/etc/issue.d
+    - echo ${BANNER_B64} | base64 -d > /target/etc/issue.d/construct.issue
+    - chmod 0644 /target/etc/issue.d/construct.issue

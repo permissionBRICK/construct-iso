@@ -1,0 +1,14 @@
+[Unit]
+Description=Construct: adopt the hostname this VM was given by the hypervisor
+Wants=hv-kvp-daemon.service network-online.target
+After=hv-kvp-daemon.service network-online.target
+ConditionPathExists=!/var/lib/construct/hostname-adopted
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=-/etc/default/construct-hostname
+ExecStart=/usr/local/sbin/construct-hostname.sh
+
+[Install]
+WantedBy=multi-user.target

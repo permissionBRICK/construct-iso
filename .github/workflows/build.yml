@@ -1,0 +1,69 @@
+name: Build and release
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test tests/Construct.Iso.Tests -c Release
+      - name: Publish Windows executable
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          dotnet publish src/Construct.Iso -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o artifacts/win-x64
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $env:DOTNET_ROOT = 'C:\nonexistent-dotnet'
+          & artifacts/win-x64/Construct.Iso.exe --help
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Copy-Item LICENSE.md artifacts/win-x64/
+          Compress-Archive -Path artifacts/win-x64/Construct.Iso.exe,artifacts/win-x64/LICENSE.md -DestinationPath artifacts/Construct.Iso-win-x64.zip
+          $hash = (Get-FileHash artifacts/Construct.Iso-win-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  Construct.Iso-win-x64.zip" | Set-Content artifacts/SHA256SUMS -Encoding ascii
+          $exeHash = (Get-FileHash artifacts/win-x64/Construct.Iso.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$exeHash  Construct.Iso.exe" | Add-Content artifacts/SHA256SUMS -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Windows'
+        with:
+          name: windows-self-contained
+          path: |
+            artifacts/Construct.Iso-win-x64.zip
+            artifacts/SHA256SUMS
+          if-no-files-found: error
+  release:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-self-contained
+          path: artifacts
+      - name: Publish immutable commit release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BUILD_COMMIT: ${{ github.sha }}
+        run: |
+          tag="build-$BUILD_COMMIT"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release already exists; immutable assets are retained."
+          else
+            gh release create "$tag" artifacts/Construct.Iso-win-x64.zip artifacts/SHA256SUMS --target "$BUILD_COMMIT" --title "Construct ISO $BUILD_COMMIT" --notes 'Self-contained Windows x64 ISO builder. Requires no WSL or installed .NET runtime. Includes SHA256SUMS.'
+          fi

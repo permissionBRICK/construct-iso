@@ -1,0 +1,13 @@
+    - mkdir -p /target/usr/local/sbin /target/etc/default /target/etc/systemd/system/multi-user.target.wants
+    - echo ${HOSTNAME_SCRIPT_B64} | base64 -d > /target/usr/local/sbin/construct-hostname.sh
+    - chmod 0755 /target/usr/local/sbin/construct-hostname.sh
+    - echo ${HOSTNAME_DEFAULT_B64} | base64 -d > /target/etc/default/construct-hostname
+    - chmod 0644 /target/etc/default/construct-hostname
+    - echo ${HOSTNAME_UNIT_B64} | base64 -d > /target/etc/systemd/system/construct-hostname.service
+    - chmod 0644 /target/etc/systemd/system/construct-hostname.service
+    - ln -sf /etc/systemd/system/construct-hostname.service /target/etc/systemd/system/multi-user.target.wants/construct-hostname.service
+    - mkdir -p /target/etc/sudoers.d
+    - echo '${VM_USER} ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/90-construct-seed
+    - chmod 0440 /target/etc/sudoers.d/90-construct-seed
+  packages:
+    - linux-cloud-tools-virtual
