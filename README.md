@@ -62,8 +62,9 @@ image is published with a rename in the output directory.
 
 ## What gets patched
 
-The installer behavior matches `reference/build-autoinstall-iso.sh`: minimized Ubuntu, direct
-storage layout, preset user, SSH and bootstrap key, console provisioning hint, and optional
+The installer behavior matches `reference/build-autoinstall-iso.sh`: minimized Ubuntu, a UEFI
+layout with an XFS root (reflinks for worktree copies), preset user, SSH and bootstrap key,
+console provisioning hint, and optional
 Hyper-V hostname adoption with passwordless sudo for the generic seed user. The guest shell
 script remains shell because it runs **inside Ubuntu**, not on the build machine.
 
